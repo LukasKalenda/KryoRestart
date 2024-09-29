@@ -1,0 +1,80 @@
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('voucherForm');
+    const companyFields = document.getElementById('companyFields');
+    const customerTypeRadios = document.getElementsByName('customerType');
+    const voucherCheckboxes = document.getElementsByName('voucherType');
+    const totalAmountInput = document.querySelector('input[name="totalAmount"]');
+    const discountCodeInput = document.querySelector('input[name="discountCode"]');
+  
+    const prices = {
+      wholeBody: 498,
+      local: 249,
+      facial: 249,
+      discountedFacial: 629,
+      discountedWholeBody: 498
+    };
+  
+    customerTypeRadios.forEach(radio => {
+      radio.addEventListener('change', function() {
+        if (this.value === 'company') {
+          companyFields.classList.remove('hidden');
+        } else {
+          companyFields.classList.add('hidden');
+        }
+      });
+    });
+  
+    voucherCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const optionsDiv = document.getElementById(this.value + 'Options');
+        if (this.checked) {
+          optionsDiv.classList.remove('hidden');
+        } else {
+          optionsDiv.classList.add('hidden');
+        }
+        calculateTotal();
+      });
+    });
+  
+    function calculateTotal() {
+      let total = 0;
+  
+      if (document.querySelector('input[name="voucherType"][value="wholeBody"]').checked) {
+        total += prices.wholeBody;
+        if (document.querySelector('input[name="wholeBodyExtra"]').checked) {
+          total += prices.discountedFacial;
+        }
+      }
+  
+      if (document.querySelector('input[name="voucherType"][value="local"]').checked) {
+        total += prices.local;
+        if (document.querySelector('input[name="localExtra"]').checked) {
+          total += prices.discountedWholeBody;
+        }
+      }
+  
+      if (document.querySelector('input[name="voucherType"][value="facial"]').checked) {
+        total += prices.facial;
+        if (document.querySelector('input[name="facialExtra"]').checked) {
+          total += prices.discountedWholeBody;
+        }
+      }
+  
+      totalAmountInput.value = total + ' Kč';
+    }
+  
+    form.addEventListener('change', calculateTotal);
+  
+    discountCodeInput.addEventListener('input', calculateTotal);
+  
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      console.log('Formulář odeslán');
+      const formData = new FormData(form);
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+    });
+  
+    calculateTotal();
+  });

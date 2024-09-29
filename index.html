@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulář pro zákazníky</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="bg-gray-100">
+  <div class="bg-white p-8 rounded-lg shadow-md max-w-2xl mx-auto">
+    <form id="voucherForm" class="bg-white p-8 rounded-lg shadow-md max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6 text-center">Nákup poukazů</h1>
+  
+    <div class="mb-6">
+      <label class="block mb-2">Nakupuji jako:</label>
+      <div class="flex space-x-4">
+        <label>
+          <input type="radio" name="customerType" value="individual" checked> Jednotlivec
+        </label>
+        <label>
+          <input type="radio" name="customerType" value="company"> Firma
+        </label>
+      </div>
+    </div>
+  
+    <div id="companyFields" class="hidden mb-4">
+      <label class="block mb-2">Název firmy:</label>
+      <input type="text" id="companyName" name="companyName" class="w-full p-2 border rounded">
+      <label class="block mb-2 mt-2">IČO:</label>
+      <div class="flex space-x-2">
+        <input type="text" id="ic" name="vatId" class="flex-grow p-2 border rounded">
+        <button type="button" id="fillDetails" class="bg-blue-500 text-white px-4 py-2 rounded">Doplnit</button>
+      </div>
+    </div>
+  
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block mb-2">Jméno:</label>
+        <input type="text" name="firstName" required class="w-full p-2 border rounded">
+      </div>
+      <div>
+        <label class="block mb-2">Příjmení:</label>
+        <input type="text" name="lastName" required class="w-full p-2 border rounded">
+      </div>
+    </div>
+  
+    <div class="mb-4">
+      <label class="block mb-2">E-mail:</label>
+      <input type="email" name="email" required class="w-full p-2 border rounded">
+    </div>
+  
+    <div class="mb-4">
+      <label class="block mb-2">Adresa:</label>
+      <input type="text" id="address" name="address" class="w-full p-2 border rounded">
+    </div>
+  
+    <div class="mb-4">
+      <label class="block mb-2">Mám zájem o poukaz na:</label>
+      
+      <div>
+        <label>
+          <input type="checkbox" name="voucherType" value="wholeBody"> Celotělová kryoterapie
+        </label>
+        <div id="wholeBodyOptions" class="ml-6 mt-2 hidden">
+          <div>
+            <label>
+              <input type="radio" name="wholeBodyOption" value="singleEntry" checked> 1 vstup do komory - 498 Kč
+            </label>
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" name="wholeBodyExtra" value="discountedFacial"> ZVÝHODNĚNÁ OBLIČEJOVÁ KRYOTERAPIE K NÁKUPU (původně 629 Kč)
+            </label>
+          </div>
+        </div>
+      </div>
+  
+      <div>
+        <label>
+          <input type="checkbox" name="voucherType" value="local"> Lokální kryoterapie
+        </label>
+        <div id="localOptions" class="ml-6 mt-2 hidden">
+          <div>
+            <label>
+              <input type="radio" name="localOption" value="singleEntry" checked> 1 lokální - 249 Kč
+            </label>
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" name="localExtra" value="discountedWholeBody"> ZVÝHODNĚNÁ CELOTĚLOVÁ KRYOTERAPIE K NÁKUPU (původně 498 Kč)
+            </label>
+          </div>
+        </div>
+      </div>
+  
+      <div>
+        <label>
+          <input type="checkbox" name="voucherType" value="facial"> Obličejová kryoterapie
+        </label>
+        <div id="facialOptions" class="ml-6 mt-2 hidden">
+          <div>
+            <label>
+              <input type="radio" name="facialOption" value="singleEntry" checked> 1 obličejová - 249 Kč
+            </label>
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" name="facialExtra" value="discountedWholeBody"> ZVÝHODNĚNÁ CELOTĚLOVÁ KRYOTERAPIE K NÁKUPU (původně 498 Kč)
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="mb-4">
+      <label class="block mb-2">Slevový kód:</label>
+      <input type="text" name="discountCode" class="w-full p-2 border rounded">
+    </div>
+  
+    <div class="mb-4">
+      <label class="block mb-2">Celková částka:</label>
+      <input type="text" name="totalAmount" readonly class="w-full p-2 border rounded bg-gray-100">
+    </div>
+  
+    <div class="mb-4">
+      <label class="block mb-2">Poznámka na fakturu:</label>
+      <textarea name="invoiceNote" class="w-full p-2 border rounded"></textarea>
+    </div>
+  
+    <div class="mb-4">
+      <label>
+        <input type="checkbox" name="terms" required>
+        Souhlasím s <a href="#" class="text-blue-500">obchodními podmínkami</a>
+      </label>
+    </div>
+  
+    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Dokončit a zaplatit</button>
+  </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/autoComplete.min.js"></script>
+
+    <script src="./script/aresApi.js"></script>
+    <script src="./script/payment.js"></script>
+    <script src="./script/script.js"></script>
+</body>
+
+</html>
