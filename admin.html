@@ -3,120 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Správa zákazníků</title>
+    <title>Admin - Správa objednávek</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
-        <h1 class="text-2xl font-bold mb-4">Správa zákazníků</h1>
-        <div id="loginForm" class="mb-4">
-            <input type="text" id="username" placeholder="Uživatelské jméno" class="p-2 border rounded mr-2">
-            <input type="password" id="password" placeholder="Heslo" class="p-2 border rounded mr-2">
-            <button onclick="login()" class="bg-blue-500 text-white px-4 py-2 rounded">Přihlásit</button>
-        </div>
-        <div id="customerList" class="mb-4 hidden"></div>
+        <h1 class="text-2xl font-bold mb-4">Správa objednávek</h1>
+        <div id="orderList" class="mb-4"></div>
         <div id="editForm" class="hidden bg-white p-4 rounded shadow"></div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';  // Upravte podle vaší skutečné URL
-        let token = localStorage.getItem('token');
+        const API_URL = 'http://localhost:3000/api';
 
-        async function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
+        async function fetchOrders() {
             try {
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password }),
-                });
-
+                const response = await fetch(`${API_URL}/orders`);
                 if (response.ok) {
-                    const data = await response.json();
-                    token = data.token;
-                    localStorage.setItem('token', token);
-                    document.getElementById('loginForm').classList.add('hidden');
-                    fetchCustomers();
-                } else {
-                    alert('Neplatné přihlašovací údaje');
-                }
-            } catch (error) {
-                console.error('Chyba při přihlašování:', error);
-                alert('Chyba při přihlašování');
-            }
-        }
-
-        async function fetchCustomers() {
-            if (!token) {
-                document.getElementById('loginForm').classList.remove('hidden');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/customers`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const customers = await response.json();
-                    const customerList = document.getElementById('customerList');
-                    customerList.innerHTML = customers.map(customer => `
+                    const orders = await response.json();
+                    const orderList = document.getElementById('orderList');
+                    orderList.innerHTML = orders.map(order => `
                         <div class="bg-white p-2 mb-2 rounded shadow">
-                            ${customer.jmeno} ${customer.prijmeni} - ${customer.email}
-                            <button onclick="editCustomer(${customer.id})" class="bg-blue-500 text-white px-2 py-1 rounded ml-2">Upravit</button>
-                            <button onclick="deleteCustomer(${customer.id})" class="bg-red-500 text-white px-2 py-1 rounded ml-2">Smazat</button>
+                            ${order.first_name} ${order.last_name} - ${order.email} - ${order.total_amount} Kč
+                            <button onclick="editOrder(${order.id})" class="bg-blue-500 text-white px-2 py-1 rounded ml-2">Upravit</button>
+                            <button onclick="deleteOrder(${order.id})" class="bg-red-500 text-white px-2 py-1 rounded ml-2">Smazat</button>
                         </div>
                     `).join('');
-                    customerList.classList.remove('hidden');
-                } else if (response.status === 401) {
-                    token = null;
-                    localStorage.removeItem('token');
-                    document.getElementById('loginForm').classList.remove('hidden');
-                    document.getElementById('customerList').classList.add('hidden');
                 }
             } catch (error) {
-                console.error('Chyba při načítání zákazníků:', error);
+                console.error('Chyba při načítání objednávek:', error);
             }
         }
 
-        async function editCustomer(id) {
+        async function editOrder(id) {
             try {
-                const response = await fetch(`${API_URL}/customers/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                const response = await fetch(`${API_URL}/orders/${id}`);
                 if (response.ok) {
-                    const customer = await response.json();
+                    const order = await response.json();
                     const editForm = document.getElementById('editForm');
                     editForm.innerHTML = `
-                        <h2 class="text-xl font-bold mb-2">Upravit zákazníka</h2>
-                        <form onsubmit="updateCustomer(event, ${id})">
+                        <h2 class="text-xl font-bold mb-2">Upravit objednávku</h2>
+                        <form onsubmit="updateOrder(event, ${id})">
                             <div class="mb-2">
                                 <label class="block">Jméno:</label>
-                                <input type="text" name="jmeno" value="${customer.jmeno}" required class="w-full p-1 border rounded">
+                                <input type="text" name="first_name" value="${order.first_name}" required class="w-full p-1 border rounded">
                             </div>
                             <div class="mb-2">
                                 <label class="block">Příjmení:</label>
-                                <input type="text" name="prijmeni" value="${customer.prijmeni}" required class="w-full p-1 border rounded">
+                                <input type="text" name="last_name" value="${order.last_name}" required class="w-full p-1 border rounded">
                             </div>
                             <div class="mb-2">
                                 <label class="block">Email:</label>
-                                <input type="email" name="email" value="${customer.email}" required class="w-full p-1 border rounded">
+                                <input type="email" name="email" value="${order.email}" required class="w-full p-1 border rounded">
                             </div>
                             <div class="mb-2">
-                                <label class="block">Telefon:</label>
-                                <input type="tel" name="telefon" value="${customer.telefon}" required class="w-full p-1 border rounded">
+                                <label class="block">Celková částka:</label>
+                                <input type="number" name="total_amount" value="${order.total_amount}" required class="w-full p-1 border rounded">
                             </div>
                             <div class="mb-2">
-                                <label class="block">Adresa:</label>
-                                <textarea name="adresa" required class="w-full p-1 border rounded">${customer.adresa}</textarea>
+                                <label class="block">Poslední 4 číslice karty:</label>
+                                <input type="text" name="card_last4" value="${order.card_last4}" maxlength="4" class="w-full p-1 border rounded">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block">Značka karty:</label>
+                                <input type="text" name="card_brand" value="${order.card_brand}" class="w-full p-1 border rounded">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block">Platnost karty (MM/RR):</label>
+                                <input type="text" name="card_expiry" value="${order.card_exp_month}/${order.card_exp_year}" pattern="\\d{2}/\\d{2}" class="w-full p-1 border rounded">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block">Status:</label>
+                                <select name="status" class="w-full p-1 border rounded">
+                                    <option value="new" ${order.status === 'new' ? 'selected' : ''}>Nová</option>
+                                    <option value="paid" ${order.status === 'paid' ? 'selected' : ''}>Zaplacená</option>
+                                    <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Zrušená</option>
+                                </select>
                             </div>
                             <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Uložit změny</button>
                         </form>
@@ -124,65 +86,63 @@
                     editForm.classList.remove('hidden');
                 }
             } catch (error) {
-                console.error('Chyba při načítání zákazníka:', error);
+                console.error('Chyba při načítání objednávky:', error);
             }
         }
 
-        async function updateCustomer(event, id) {
+        async function updateOrder(event, id) {
             event.preventDefault();
             const formData = new FormData(event.target);
-            const customerData = Object.fromEntries(formData.entries());
+            const orderData = Object.fromEntries(formData.entries());
             
+            // Zpracování platnosti karty
+            const [expMonth, expYear] = orderData.card_expiry.split('/');
+            orderData.card_exp_month = parseInt(expMonth);
+            orderData.card_exp_year = parseInt(expYear);
+            delete orderData.card_expiry;
+
             try {
-                const response = await fetch(`${API_URL}/customers/${id}`, {
+                const response = await fetch(`${API_URL}/orders/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify(customerData),
+                    body: JSON.stringify(orderData),
                 });
 
                 if (response.ok) {
-                    fetchCustomers();
+                    fetchOrders();
                     document.getElementById('editForm').classList.add('hidden');
                 } else {
-                    alert('Chyba při aktualizaci zákazníka');
+                    alert('Chyba při aktualizaci objednávky');
                 }
             } catch (error) {
-                console.error('Chyba při aktualizaci zákazníka:', error);
-                alert('Chyba při aktualizaci zákazníka');
+                console.error('Chyba při aktualizaci objednávky:', error);
+                alert('Chyba při aktualizaci objednávky');
             }
         }
 
-        async function deleteCustomer(id) {
-            if (confirm('Opravdu chcete smazat tohoto zákazníka?')) {
+        async function deleteOrder(id) {
+            if (confirm('Opravdu chcete smazat tuto objednávku?')) {
                 try {
-                    const response = await fetch(`${API_URL}/customers/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
+                    const response = await fetch(`${API_URL}/orders/${id}`, {
+                        method: 'DELETE'
                     });
 
                     if (response.ok) {
-                        fetchCustomers();
+                        fetchOrders();
                     } else {
-                        alert('Chyba při mazání zákazníka');
+                        alert('Chyba při mazání objednávky');
                     }
                 } catch (error) {
-                    console.error('Chyba při mazání zákazníka:', error);
-                    alert('Chyba při mazání zákazníka');
+                    console.error('Chyba při mazání objednávky:', error);
+                    alert('Chyba při mazání objednávky');
                 }
             }
         }
 
-        // Kontrola, zda je uživatel přihlášen při načtení stránky
-        if (token) {
-            fetchCustomers();
-        } else {
-            document.getElementById('loginForm').classList.remove('hidden');
-        }
+        // Načtení objednávek při načtení stránky
+        fetchOrders();
     </script>
 </body>
 </html>
