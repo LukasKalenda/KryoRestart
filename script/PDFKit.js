@@ -1,4 +1,4 @@
-import PDFDocument from 'pdfkit';
+const PDFDocument = require('pdfkit');
 const fs = require("fs");
 
 function generateCertificate(userData) {
@@ -8,7 +8,7 @@ function generateCertificate(userData) {
   });
 
   // Pipe the PDF into a file
-  doc.pipe(fs.createWriteStream(`certificate_${userData.id}.pdf`));
+  doc.pipe(fs.createWriteStream(`Certifikat_${userData.id}.pdf`));
 
   // Add background image
   doc.image("./assets/kryo-back.jpg", 0, 0, { width: 842 });
@@ -19,11 +19,9 @@ function generateCertificate(userData) {
     .fontSize(30)
     .text("Certifikát", 0, 100, { align: "center" });
 
-  doc
-    .fontSize(20)
-    .text(`Tímto potvrzujeme, že ${userData.name}`, 0, 200, {
-      align: "center",
-    });
+  doc.fontSize(20).text(`Tímto potvrzujeme, že ${userData.name}`, 0, 200, {
+    align: "center",
+  });
 
   doc
     .fontSize(16)
@@ -45,8 +43,7 @@ function generateCertificate(userData) {
 }
 
 // Usage
-const payment = document.getElementById("payment-button");
-document.addEventListener(
+document.getElementById("payment-button").addEventListener(
   "click",
   generateCertificate({
     id: "12345",
