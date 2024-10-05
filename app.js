@@ -1,8 +1,6 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 
 const app = express();
 const pool = new Pool({
@@ -12,51 +10,34 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 
-// const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';  // DEV Version
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123456'; // V produkci vždy používejte environment proměnnou!
 
-const JWT_SECRET = process.env.JWT_SECRET;
-// Middleware pro ověření JWT
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (token == null) return res.sendStatus(401);
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
+// Middleware pro ověření hesla
+const authenticatePassword = (req, res, next) => {
+  const { password } = req.headers;
+  if (password === ADMIN_PASSWORD) {
     next();
-  });
+  } else {
+    res.status(401).json({ error: 'Neplatné heslo' });
+  }
 };
 
-// Login endpoint
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  
-  if (username === 'admin' && password === 'password') {
-    const token = jwt.sign({ username: username }, JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
-  } else {
-    res.status(401).json({ error: 'Neplatné přihlašovací údaje' });
-  }
-});
-
-// Získat všechny zákazníky
-app.get('/api/customers', authenticateToken, async (req, res) => {
+// Získat všechny objednávky
+app.get('/api/orders', authenticatePassword, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM customers ORDER BY created_at DESC');
+    const { rows } = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Získat jednoho zákazníka
-app.get('/api/customers/:id', authenticateToken, async (req, res) => {
+// Získat jednu objednávku
+app.get('/api/orders/:id', authenticatePassword, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM customers WHERE id = $1', [req.params.id]);
+    const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Zákazník nenalezen' });
+      return res.status(404).json({ error: 'Objednávka nenalezena' });
     }
     res.json(rows[0]);
   } catch (err) {
@@ -64,13 +45,13 @@ app.get('/api/customers/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Vytvořit nového zákazníka
-app.post('/api/customers', authenticateToken, async (req, res) => {
-  const { customer_type, ic, jmeno, prijmeni, email, telefon, adresa, popis_problemu, datum_terminu, casove_okno } = req.body;
+// Vytvořit novou objednávku
+app.post('/api/orders', async (req, res) => {
+  const { customer_type, company_name, ic, first_name, last_name, email, address, voucher_type, discount_code, total_amount, invoice_note } = req.body;
   try {
     const { rows } = await pool.query(
-      'INSERT INTO customers (customer_type, ic, jmeno, prijmeni, email, telefon, adresa, popis_problemu, datum_terminu, casove_okno) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [customer_type, ic, jmeno, prijmeni, email, telefon, adresa, popis_problemu, datum_terminu, casove_okno]
+      'INSERT INTO orders (customer_type, company_name, ic, first_name, last_name, email, address, voucher_type, discount_code, total_amount, invoice_note) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [customer_type, company_name, ic, first_name, last_name, email, address, voucher_type, discount_code, total_amount, invoice_note]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -78,16 +59,16 @@ app.post('/api/customers', authenticateToken, async (req, res) => {
   }
 });
 
-// Aktualizovat zákazníka
-app.put('/api/customers/:id', authenticateToken, async (req, res) => {
-  const { customer_type, ic, jmeno, prijmeni, email, telefon, adresa, popis_problemu, datum_terminu, casove_okno } = req.body;
+// Aktualizovat objednávku
+app.put('/api/orders/:id', authenticatePassword, async (req, res) => {
+  const { customer_type, company_name, ic, first_name, last_name, email, address, voucher_type, discount_code, total_amount, invoice_note } = req.body;
   try {
     const { rows } = await pool.query(
-      'UPDATE customers SET customer_type = $1, ic = $2, jmeno = $3, prijmeni = $4, email = $5, telefon = $6, adresa = $7, popis_problemu = $8, datum_terminu = $9, casove_okno = $10, updated_at = CURRENT_TIMESTAMP WHERE id = $11 RETURNING *',
-      [customer_type, ic, jmeno, prijmeni, email, telefon, adresa, popis_problemu, datum_terminu, casove_okno, req.params.id]
+      'UPDATE orders SET customer_type = $1, company_name = $2, ic = $3, first_name = $4, last_name = $5, email = $6, address = $7, voucher_type = $8, discount_code = $9, total_amount = $10, invoice_note = $11, updated_at = CURRENT_TIMESTAMP WHERE id = $12 RETURNING *',
+      [customer_type, company_name, ic, first_name, last_name, email, address, voucher_type, discount_code, total_amount, invoice_note, req.params.id]
     );
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Zákazník nenalezen' });
+      return res.status(404).json({ error: 'Objednávka nenalezena' });
     }
     res.json(rows[0]);
   } catch (err) {
@@ -95,14 +76,14 @@ app.put('/api/customers/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Smazat zákazníka
-app.delete('/api/customers/:id', authenticateToken, async (req, res) => {
+// Smazat objednávku
+app.delete('/api/orders/:id', authenticatePassword, async (req, res) => {
   try {
-    const { rows } = await pool.query('DELETE FROM customers WHERE id = $1 RETURNING *', [req.params.id]);
+    const { rows } = await pool.query('DELETE FROM orders WHERE id = $1 RETURNING *', [req.params.id]);
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Zákazník nenalezen' });
+      return res.status(404).json({ error: 'Objednávka nenalezena' });
     }
-    res.json({ message: 'Zákazník úspěšně smazán' });
+    res.json({ message: 'Objednávka úspěšně smazána' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
